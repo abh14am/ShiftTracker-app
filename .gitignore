@@ -6,13 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# Dependency directories
-node_modules/
-jspm_packages/
-.pytest_cache/
-__pycache__/
-*.pyc
-*.pyo
+
 
 # Front-end build
 frontend/dist/
@@ -35,6 +29,14 @@ venv.bak/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Dependency directories
+node_modules/
+jspm_packages/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
 
 # IDEs and Editors
 .idea/
