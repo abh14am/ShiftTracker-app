@@ -59,4 +59,4 @@ The `docker-compose.yml` mounts the `./backend` folder into the FastAPI containe
 
 ## License
 
-N/A
+MIT License

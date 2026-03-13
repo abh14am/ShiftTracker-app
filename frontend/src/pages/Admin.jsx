@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { getTeamMembers, createTeamMember, deleteTeamMember, getShiftTypes, createShiftType, getShifts, deleteShift } from '../api';
-import { Users, Clock, Plus, Trash2, List } from 'lucide-react';
+import { 
+  getTeamMembers, createTeamMember, deleteTeamMember, 
+  getShiftTypes, createShiftType, deleteShiftType,
+  getShifts, deleteShift 
+} from '../api';
+import { Users, Clock, Plus, Trash2, List, ShieldCheck } from 'lucide-react';
 
-export default function Admin() {
+export default function Admin({ userAuth }) {
   const [members, setMembers] = useState([]);
   const [shiftTypes, setShiftTypes] = useState([]);
   const [shifts, setShifts] = useState([]);
   
   const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberPassword, setNewMemberPassword] = useState('');
+  const [newMemberIsAdmin, setNewMemberIsAdmin] = useState(false);
   const [newShiftName, setNewShiftName] = useState('');
   const [newShiftTime, setNewShiftTime] = useState('');
 
@@ -37,23 +43,43 @@ export default function Admin() {
 
   const handleAddMember = async (e) => {
     e.preventDefault();
-    if (!newMemberName.trim()) return;
+    if (!newMemberName.trim() || !newMemberPassword.trim()) {
+      alert("Please provide both a username and a password.");
+      return;
+    }
     try {
-      await createTeamMember({ name: newMemberName });
+      await createTeamMember({ 
+        name: newMemberName, 
+        password: newMemberPassword,
+        is_admin: newMemberIsAdmin 
+      });
       setNewMemberName('');
+      setNewMemberPassword('');
+      setNewMemberIsAdmin(false);
       fetchData();
     } catch (err) {
       alert("Failed to add member. Maybe they already exist?");
     }
   };
 
-  const handleDeleteMember = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this member? This might fail if they are part of existing shifts.")) return;
+  const handleDeleteMember = async (targetMember) => {
+    if (targetMember.is_primary_admin) {
+      alert("The Primary Administrator cannot be deleted.");
+      return;
+    }
+
+    if (targetMember.is_admin && !userAuth.isPrimaryAdmin) {
+      alert("Only the Primary Administrator can delete other administrator accounts.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${targetMember.name}?`)) return;
+
     try {
-      await deleteTeamMember(id);
+      await deleteTeamMember(targetMember.id);
       fetchData();
     } catch (err) {
-      alert("Cannot delete this member. They are likely assigned to an existing shift.");
+      alert(err.response?.data?.detail || "Cannot delete this member.");
     }
   };
 
@@ -67,6 +93,16 @@ export default function Admin() {
       fetchData();
     } catch (err) {
       alert("Failed to add shift type. Maybe name already exists?");
+    }
+  };
+
+  const handleDeleteShiftType = async (st) => {
+    if (!window.confirm(`Delete shift type "${st.name}"? This will fail if it's referenced in existing shifts.`)) return;
+    try {
+      await deleteShiftType(st.id);
+      fetchData();
+    } catch (err) {
+      alert("Cannot delete shift type. It is likely tied to existing shift records.");
     }
   };
 
@@ -86,7 +122,7 @@ export default function Admin() {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header>
         <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Admin Configuration</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Configure team members and shift schedules to populate form dropdowns.</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Configure team members and shift schedules.</p>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '2rem' }}>
@@ -100,32 +136,58 @@ export default function Admin() {
             <h2 style={{ fontSize: '1.25rem' }}>Team Members</h2>
           </div>
 
-          <form onSubmit={handleAddMember} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+          <form onSubmit={handleAddMember} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
             <input 
               type="text" 
               className="input-field" 
               placeholder="Username" 
               value={newMemberName} 
               onChange={e => setNewMemberName(e.target.value)} 
+              required
             />
-            <button type="submit" className="btn btn-primary" style={{ padding: '0 1rem' }}>
-              <Plus size={18} /> Add
+            <input 
+              type="password" 
+              className="input-field" 
+              placeholder="Password" 
+              value={newMemberPassword} 
+              onChange={e => setNewMemberPassword(e.target.value)} 
+              required
+            />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              <input 
+                type="checkbox" 
+                checked={newMemberIsAdmin} 
+                onChange={e => setNewMemberIsAdmin(e.target.checked)} 
+              />
+              Administrator Privileges
+            </label>
+            <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem' }}>
+              <Plus size={18} /> Add Member
             </button>
           </form>
 
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {members.length === 0 && <li style={{ color: 'var(--text-muted)' }}>No team members configured yet.</li>}
-            {members.map(m => (
-              <li key={m.id} style={{ background: 'var(--bg-surface)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 500 }}>{m.name}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>ID: {m.id}</span>
-                  <button onClick={() => handleDeleteMember(m.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex' }} title="Delete Member">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </li>
-            ))}
+            {members.map(m => {
+              const canDelete = !m.is_primary_admin && (!m.is_admin || userAuth.isPrimaryAdmin);
+              
+              return (
+                <li key={m.id} style={{ background: 'var(--bg-surface)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontWeight: 500 }}>{m.name}</span>
+                    {m.is_primary_admin && <ShieldCheck size={14} color="var(--accent-primary)" title="Primary Administrator" />}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{m.is_admin ? 'Admin' : `ID: ${m.id}`}</span>
+                    {canDelete && (
+                      <button onClick={() => handleDeleteMember(m)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex' }} title="Delete Member">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
 
@@ -145,6 +207,7 @@ export default function Admin() {
               placeholder="Shift Name (e.g. Morning Shift)" 
               value={newShiftName} 
               onChange={e => setNewShiftName(e.target.value)} 
+              required
             />
             <div style={{ display: 'flex', gap: '1rem' }}>
               <input 
@@ -153,6 +216,7 @@ export default function Admin() {
                 placeholder="Time (e.g. 6am - 2pm)" 
                 value={newShiftTime} 
                 onChange={e => setNewShiftTime(e.target.value)} 
+                required
               />
               <button type="submit" className="btn btn-primary" style={{ padding: '0 1rem', whiteSpace: 'nowrap' }}>
                 <Plus size={18} /> Add
@@ -163,9 +227,14 @@ export default function Admin() {
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
              {shiftTypes.length === 0 && <li style={{ color: 'var(--text-muted)' }}>No shift types configured yet.</li>}
             {shiftTypes.map(st => (
-              <li key={st.id} style={{ background: 'var(--bg-surface)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontWeight: 500 }}>{st.name}</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{st.time_range}</span>
+              <li key={st.id} style={{ background: 'var(--bg-surface)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span style={{ fontWeight: 500 }}>{st.name}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{st.time_range}</span>
+                </div>
+                <button onClick={() => handleDeleteShiftType(st)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex' }} title="Delete Shift Type">
+                  <Trash2 size={16} />
+                </button>
               </li>
             ))}
           </ul>
@@ -200,9 +269,9 @@ export default function Admin() {
                 <tr key={shift.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 500 }}>#{shift.id}</td>
                   <td style={{ padding: '0.75rem 1rem' }}>{new Date(shift.date).toLocaleDateString()}</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>{shift.shift_type.name}</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>{shift.shift_type?.name || 'Deleted Type'}</td>
                   <td style={{ padding: '0.75rem 1rem' }}>
-                     {shift.outgoing_engineer.name} <span style={{ color: 'var(--text-muted)' }}>→</span> {shift.incoming_engineer.name}
+                     {shift.outgoing_engineer?.name || 'Unknown'} <span style={{ color: 'var(--text-muted)' }}>→</span> {shift.incoming_engineer?.name || 'Unknown'}
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <button onClick={() => handleDeleteShift(shift.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>

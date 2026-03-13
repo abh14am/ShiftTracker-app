@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getTeamMembers, getShiftTypes, createShift } from '../api';
 import { Send } from 'lucide-react';
 
-export default function NewShift() {
+export default function NewShift({ userAuth }) {
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [shiftTypes, setShiftTypes] = useState([]);
@@ -31,7 +31,14 @@ export default function NewShift() {
         setMembers(m);
         setShiftTypes(s);
         if (m.length > 0) {
-          setFormData(prev => ({ ...prev, outgoing_engineer_id: m[0].id, incoming_engineer_id: m.length > 1 ? m[1].id : m[0].id }));
+          const currentUserId = userAuth?.userId || localStorage.getItem('userId');
+          const isAdmin = userAuth?.isAdmin || localStorage.getItem('isAdmin') === 'true';
+          
+          setFormData(prev => ({ 
+            ...prev, 
+            outgoing_engineer_id: !isAdmin && currentUserId ? currentUserId : m[0].id, 
+            incoming_engineer_id: m.length > 1 ? m[1].id : m[0].id 
+          }));
         }
         if (s.length > 0) {
           setFormData(prev => ({ ...prev, shift_type_id: s[0].id }));
@@ -97,9 +104,18 @@ export default function NewShift() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Outgoing Engineer</label>
-              <select name="outgoing_engineer_id" className="input-field" value={formData.outgoing_engineer_id} onChange={handleChange} required>
+              <select 
+                name="outgoing_engineer_id" 
+                className="input-field" 
+                value={formData.outgoing_engineer_id} 
+                onChange={handleChange} 
+                required
+                disabled={!userAuth?.isAdmin}
+                style={!userAuth?.isAdmin ? { opacity: 0.7, cursor: 'not-allowed', background: 'var(--bg-base)' } : {}}
+              >
                 {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
+              {!userAuth?.isAdmin && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Fixed to your profile.</p>}
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Incoming Engineer</label>

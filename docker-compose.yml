@@ -18,6 +18,9 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql+asyncpg://user:password@db:5432/shift_tracker
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin
+      SECRET_KEY: change_me_in_production_1234567890
     ports:
       - "8000:8000"
     volumes:

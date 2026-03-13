@@ -20,10 +20,14 @@ class TeamMemberBase(BaseModel):
     name: str
 
 class TeamMemberCreate(TeamMemberBase):
-    pass
+    password: str
+    is_admin: bool = False
 
 class TeamMemberOut(TeamMemberBase):
     id: int
+    is_admin: bool
+    is_primary_admin: bool
+
     class Config:
         from_attributes = True
 
@@ -48,9 +52,11 @@ class ShiftCreate(ShiftBase):
 class ShiftOut(ShiftBase):
     id: int
     created_at: datetime
+    created_by_id: int
     shift_type: ShiftTypeOut
     outgoing_engineer: TeamMemberOut
     incoming_engineer: TeamMemberOut
+    created_by: TeamMemberOut
 
     class Config:
         from_attributes = True

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getTeamMembers, getShiftTypes, getShiftById, updateShift } from '../api';
 import { Save } from 'lucide-react';
 
-export default function EditShift() {
+export default function EditShift({ userAuth }) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [members, setMembers] = useState([]);
@@ -36,6 +36,15 @@ export default function EditShift() {
         setMembers(m);
         setShiftTypes(s);
         
+        const currentUserId = parseInt(userAuth?.userId || localStorage.getItem('userId'));
+        const isAdmin = userAuth?.isAdmin || localStorage.getItem('isAdmin') === 'true';
+
+        if (!isAdmin && existingShift.created_by_id !== currentUserId) {
+          alert("You are not authorized to edit this handover.");
+          navigate(`/shifts/${id}`);
+          return;
+        }
+
         setFormData({
             date: existingShift.date.split('T')[0],
             shift_type_id: existingShift.shift_type_id,

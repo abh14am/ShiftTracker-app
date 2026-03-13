@@ -34,7 +34,7 @@ export default function Dashboard() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Shift Handovers</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Review all recent SRE team shift transitions.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Review all recent team shift transitions.</p>
         </div>
         <Link to="/new" className="btn btn-primary">
           <Activity size={18} /> New Handover

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getShiftById } from '../api';
 import { ArrowLeft, Clock, User, AlertCircle, CheckCircle, Info, Edit } from 'lucide-react';
 
-export default function ShiftDetails() {
+export default function ShiftDetails({ userAuth }) {
   const { id } = useParams();
   const [shift, setShift] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +21,8 @@ export default function ShiftDetails() {
     };
     fetchShift();
   }, [id]);
+
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
   if (loading) return <div className="text-center py-12 text-secondary">Loading shift details...</div>;
   if (!shift) return <div className="text-center py-12 text-secondary">Shift not found.</div>;
@@ -59,9 +61,11 @@ export default function ShiftDetails() {
             <span style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-primary)', padding: '0.5rem 1rem', borderRadius: '999px', fontWeight: 600 }}>
               ID #{shift.id}
             </span>
-            <Link to={`/shifts/${shift.id}/edit`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Edit size={16} /> Edit
-            </Link>
+            {((userAuth?.isAdmin) || (shift.created_by_id === parseInt(userAuth?.userId || localStorage.getItem('userId')))) && (
+              <Link to={`/shifts/${shift.id}/edit`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Edit size={16} /> Edit
+              </Link>
+            )}
           </div>
         </div>
       </div>
