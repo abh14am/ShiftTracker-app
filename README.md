@@ -1,6 +1,6 @@
 # Shift Tracker Application
 
-A full-stack, aesthetically pleasing web application designed to track shift handovers for Site Reliability Engineering (SRE) and Operations teams. Built with React, FastAPI, and PostgreSQL, all orchestrated by Docker Compose.
+A full-stack, aesthetically pleasing web application designed to track shift handovers for 24*7 Operations teams. Built with React, FastAPI, and PostgreSQL, all orchestrated by Docker Compose.
 
 ## Features
 
@@ -59,4 +59,4 @@ The `docker-compose.yml` mounts the `./backend` folder into the FastAPI containe
 
 ## License
 
-MIT License
+N/A
