@@ -1,6 +1,6 @@
 # Shift Tracker Application
 
-A full-stack, aesthetically pleasing web application designed to track shift handovers for 24*7 Operations teams. Built with React, FastAPI, and PostgreSQL, all orchestrated by Docker Compose.
+A full-stack, aesthetically pleasing web application designed to track shift handovers for 24\*7 Operations teams. Built with React, FastAPI, and PostgreSQL, all orchestrated by Docker Compose.
 
 ## Features
 
@@ -26,12 +26,14 @@ A full-stack, aesthetically pleasing web application designed to track shift han
 ## Quick Start
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/yourusername/shift-tracker.git
    cd shift-tracker
    ```
 
 2. **Run the application**:
+
    ```bash
    docker compose up -d --build
    ```
@@ -39,10 +41,12 @@ A full-stack, aesthetically pleasing web application designed to track shift han
 3. **Access the Application**:
    - Open your browser and navigate to `http://localhost`.
    - The backend API swagger documentation is available at `http://localhost/api/docs`.
+   - Health Check Endpoint: `http://localhost:8000/api/health`
 
 ## Initial Setup
 
-On your first run, the database will be empty. 
+On your first run, the database will be empty.
+
 1. Navigate to the **Admin Config** panel via the sidebar.
 2. Add your **Team Members** (e.g. "bjohnson").
 3. Add your **Shift Types** (e.g. "Morning", "06:00-14:00").
@@ -53,6 +57,7 @@ On your first run, the database will be empty.
 The `docker-compose.yml` mounts the `./backend` folder into the FastAPI container, meaning Python code changes will live-reload. The frontend is built using a multi-stage Dockerfile to ensure a clean, isolated build environment on any host machine.
 
 ### Project Structure
+
 - `/frontend`: React application code
 - `/backend`: FastAPI application and database models
 - `/nginx`: Nginx reverse proxy configuration
