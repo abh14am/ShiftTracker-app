@@ -38,29 +38,38 @@ A full-stack, aesthetically pleasing web application designed to track shift han
    docker compose up -d --build
    ```
 
-3. **Access the Application**:
-   - Open your browser and navigate to `http://localhost`.
-   - The backend API swagger documentation is available at `http://localhost/api/docs`.
-   - Health Check Endpoint: `http://localhost:8000/api/health`
+## Configuration & Environment Variables
 
-## Initial Setup
+The application uses environment variables for configuration. A template is provided in `.env.example`.
 
-On your first run, the database will be empty.
+1. **Create an `.env` file**:
+   ```bash
+   cp .env.example .env
+   ```
+2. **Key Variables**:
+   - `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB`: Controls the PostgreSQL container.
+   - `DATABASE_URL`: The full connection string for the backend (e.g., `postgresql+asyncpg://user:password@db:5432/shift_tracker`).
+   - `SECRET_KEY`: Critical for JWT security. Change this in production.
+   - `ADMIN_USERNAME` / `ADMIN_PASSWORD`: Credentials for the initial bootstrap admin user.
 
-1. Navigate to the **Admin Config** panel via the sidebar.
-2. Add your **Team Members** (e.g. "bjohnson").
-3. Add your **Shift Types** (e.g. "Morning", "06:00-14:00").
-4. Navigate to **New Handover** to log your first shift!
+## Database Hosting Scenarios
 
-## Development
+### Scenario A: Database on Same Server (Default)
+Docker Compose will automatically start and manage the PostgreSQL container.
+- **`DATABASE_URL` in `.env`**: Point to `@db:5432/...`.
 
-The `docker-compose.yml` mounts the `./backend` folder into the FastAPI container, meaning Python code changes will live-reload. The frontend is built using a multi-stage Dockerfile to ensure a clean, isolated build environment on any host machine.
+### Scenario B: External Database Server
+If you are using a managed database or a DB on another server:
+1. Update **`DATABASE_URL`** in your `.env` file to point to your external server's IP and credentials.
+2. Edit `docker-compose.yml` and comment out or remove the `db` service.
+3. Ensure the external database allows connections from your application server's IP on port `5432`.
 
-### Project Structure
+## Additional Endpoints
 
-- `/frontend`: React application code
-- `/backend`: FastAPI application and database models
-- `/nginx`: Nginx reverse proxy configuration
+- **API Documentation (Swagger)**: `http://localhost:8000/docs` (technical manual and interactive testing).
+- **Health Check & Fail-safe**: `http://localhost:8000/api/health`
+  - Confirms database connectivity.
+  - Automatically seeds the admin user if missing.
 
 ## License
 

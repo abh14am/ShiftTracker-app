@@ -3,10 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: shift_tracker
+    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -16,11 +13,8 @@ services:
     build: ./backend
     depends_on:
       - db
+    env_file: .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://user:password@db:5432/shift_tracker
-      ADMIN_USERNAME: admin
-      ADMIN_PASSWORD: admin
-      SECRET_KEY: change_me_in_production_1234567890
       PYTHONUNBUFFERED: "1"
     ports:
       - "8000:8000"
