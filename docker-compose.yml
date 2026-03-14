@@ -21,6 +21,7 @@ services:
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: admin
       SECRET_KEY: change_me_in_production_1234567890
+      PYTHONUNBUFFERED: "1"
     ports:
       - "8000:8000"
     volumes:

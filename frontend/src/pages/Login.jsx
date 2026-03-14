@@ -14,32 +14,33 @@ const Login = ({ setAuth }) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
     try {
       // OAuth2 requires form data, not JSON
       const formData = new URLSearchParams();
-      formData.append('username', username);
+      
+      let processedUsername = username;
+      if (username.toLowerCase() === 'admin') {
+        processedUsername = username.toLowerCase();
+      }
+      formData.append('username', processedUsername);
       formData.append('password', password);
 
       const response = await api.post('/auth/token', formData, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
 
-      const { access_token, is_admin, is_primary_admin, user_id } = response.data;
+      const data = response.data;
+      if (!data || !data.access_token) {
+        throw new Error("Invalid response from server");
+      }
+
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('isAdmin', String(!!data.is_admin)); 
+      localStorage.setItem('isPrimaryAdmin', String(!!data.is_primary_admin));
+      localStorage.setItem('userId', String(data.user_id));
+      localStorage.setItem('username', data.username || processedUsername);
       
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('isAdmin', is_admin);
-      localStorage.setItem('isPrimaryAdmin', is_primary_admin);
-      localStorage.setItem('userId', user_id);
-      
-      setAuth({ 
-        isAuthenticated: true, 
-        isAdmin: is_admin, 
-        isPrimaryAdmin: is_primary_admin, 
-        userId: user_id,
-        username 
-      });
-      navigate('/');
+      window.location.href = '/';
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
     } finally {

@@ -4,7 +4,7 @@ import {
   getShiftTypes, createShiftType, deleteShiftType,
   getShifts, deleteShift 
 } from '../api';
-import { Users, Clock, Plus, Trash2, List, ShieldCheck } from 'lucide-react';
+import { Users, Clock, Plus, Trash2, List, ShieldCheck, Edit } from 'lucide-react';
 
 export default function Admin({ userAuth }) {
   const [members, setMembers] = useState([]);
@@ -16,6 +16,10 @@ export default function Admin({ userAuth }) {
   const [newMemberIsAdmin, setNewMemberIsAdmin] = useState(false);
   const [newShiftName, setNewShiftName] = useState('');
   const [newShiftTime, setNewShiftTime] = useState('');
+  
+  const [editingShiftType, setEditingShiftType] = useState(null);
+  const [editShiftName, setEditShiftName] = useState('');
+  const [editShiftTime, setEditShiftTime] = useState('');
 
   const [loading, setLoading] = useState(true);
 
@@ -104,6 +108,29 @@ export default function Admin({ userAuth }) {
     } catch (err) {
       alert("Cannot delete shift type. It is likely tied to existing shift records.");
     }
+  };
+
+  const handleEditShiftType = (st) => {
+    setEditingShiftType(st.id);
+    setEditShiftName(st.name);
+    setEditShiftTime(st.time_range);
+  };
+
+  const handleUpdateShiftType = async (e) => {
+    e.preventDefault();
+    try {
+      await updateShiftType(editingShiftType, { name: editShiftName, time_range: editShiftTime });
+      setEditingShiftType(null);
+      fetchData();
+    } catch (err) {
+      alert("Failed to update shift type.");
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingShiftType(null);
+    setEditShiftName('');
+    setEditShiftTime('');
   };
 
   const handleDeleteShift = async (id) => {
@@ -228,13 +255,46 @@ export default function Admin({ userAuth }) {
              {shiftTypes.length === 0 && <li style={{ color: 'var(--text-muted)' }}>No shift types configured yet.</li>}
             {shiftTypes.map(st => (
               <li key={st.id} style={{ background: 'var(--bg-surface)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <span style={{ fontWeight: 500 }}>{st.name}</span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{st.time_range}</span>
-                </div>
-                <button onClick={() => handleDeleteShiftType(st)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex' }} title="Delete Shift Type">
-                  <Trash2 size={16} />
-                </button>
+                {editingShiftType === st.id ? (
+                  <form onSubmit={handleUpdateShiftType} style={{ display: 'flex', gap: '0.5rem', width: '100%', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                      <input 
+                        className="input-field" 
+                        value={editShiftName} 
+                        onChange={e => setEditShiftName(e.target.value)} 
+                        placeholder="Name"
+                        style={{ padding: '0.4rem 0.75rem' }}
+                        autoFocus
+                      />
+                      <input 
+                        className="input-field" 
+                        value={editShiftTime} 
+                        onChange={e => setEditShiftTime(e.target.value)} 
+                        placeholder="Time"
+                        style={{ padding: '0.4rem 0.75rem' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      <button type="submit" className="btn btn-primary" style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}>Save</button>
+                      <button type="button" onClick={cancelEdit} className="btn" style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem', background: 'var(--bg-base)' }}>Cancel</button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <span style={{ fontWeight: 500 }}>{st.name}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{st.time_range}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button onClick={() => handleEditShiftType(st)} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', fontWeight: 500 }} title="Edit Shift Type">
+                        <Edit size={14} /> Edit
+                      </button>
+                      <button onClick={() => handleDeleteShiftType(st)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex' }} title="Delete Shift Type">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </>
+                )}
               </li>
             ))}
           </ul>

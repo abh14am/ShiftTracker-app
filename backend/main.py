@@ -82,7 +82,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        
+    
     access_token_expires = auth.timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(
         data={"sub": user.name}, expires_delta=access_token_expires
@@ -92,7 +92,8 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         "token_type": "bearer", 
         "is_admin": bool(user.is_admin), 
         "is_primary_admin": bool(user.is_primary_admin),
-        "user_id": user.id
+        "user_id": user.id,
+        "username": user.name
     }
 
 @app.get("/api/auth/me", response_model=schemas.TeamMemberOut)
@@ -286,7 +287,7 @@ async def get_shifts(
             selectinload(models.Shift.incoming_engineer),
             selectinload(models.Shift.created_by)
         )
-        .order_by(models.Shift.created_at.desc())
+        .order_by(models.Shift.date.desc(), models.Shift.created_at.desc())
         .offset(skip).limit(limit)
     )
     return result.scalars().all()

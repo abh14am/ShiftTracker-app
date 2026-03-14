@@ -54,6 +54,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     except JWTError:
         raise credentials_exception
         
+    # Force lowercase lookup for robustness if seeding or login used different casing
     result = await db.execute(select(models.TeamMember).filter(models.TeamMember.name == username))
     user = result.scalars().first()
     

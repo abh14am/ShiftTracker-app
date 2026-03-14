@@ -9,7 +9,8 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+    // Ensure we don't send string "null" or "undefined"
+    if (token && token !== 'null' && token !== 'undefined') {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -22,13 +23,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      localStorage.removeItem('isAdmin');
-      // Redirect to login if not already there
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      // Don't intercept 401s on the login page itself (handled by Login component)
+      if (window.location.pathname === '/login') {
+        return Promise.reject(error);
       }
+
+      console.warn("Global 401 caught on non-login page. Wiping storage.");
+      localStorage.clear(); // Brute force clear to be absolutely sure
+      
+      // Force reload to login
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
